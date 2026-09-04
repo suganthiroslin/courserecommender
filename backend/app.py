@@ -8,12 +8,17 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 import os
 
+from flask_cors import CORS
+
 
 # ============================================================
 # 1. CREATE FLASK APPLICATION
 # ============================================================
 
 app = Flask(__name__)
+
+# Allow requests from Netlify frontend
+CORS(app)
 
 
 # ============================================================
@@ -58,7 +63,6 @@ def load_courses():
         os.path.abspath(__file__)
     )
 
-
     # --------------------------------------------------------
     # Dataset path
     # --------------------------------------------------------
@@ -67,7 +71,6 @@ def load_courses():
         base_folder,
         "coursea_data.csv"
     )
-
 
     # --------------------------------------------------------
     # Check whether dataset exists
@@ -78,14 +81,18 @@ def load_courses():
         print()
         print("ERROR: Dataset file not found!")
         print()
+
         print("Python is looking for:")
         print(csv_path)
+
         print()
+
         print("Make sure your dataset is named:")
         print("coursea_data.csv")
-        print()
-        return
 
+        print()
+
+        return
 
     # --------------------------------------------------------
     # Check whether database already has courses
@@ -99,7 +106,6 @@ def load_courses():
 
         return
 
-
     # --------------------------------------------------------
     # Read CSV
     # --------------------------------------------------------
@@ -108,11 +114,9 @@ def load_courses():
     print("Loading dataset...")
     print()
 
-
     data = pd.read_csv(
         csv_path
     )
-
 
     # --------------------------------------------------------
     # Display columns
@@ -127,7 +131,6 @@ def load_courses():
     )
 
     print()
-
 
     # --------------------------------------------------------
     # Check course_title column
@@ -151,7 +154,6 @@ def load_courses():
 
         return
 
-
     # --------------------------------------------------------
     # Remove empty course titles
     # --------------------------------------------------------
@@ -160,7 +162,6 @@ def load_courses():
         subset=["course_title"]
     )
 
-
     # --------------------------------------------------------
     # Remove duplicate courses
     # --------------------------------------------------------
@@ -168,7 +169,6 @@ def load_courses():
     data = data.drop_duplicates(
         subset=["course_title"]
     )
-
 
     # --------------------------------------------------------
     # Insert courses into SQLite
@@ -182,9 +182,7 @@ def load_courses():
 
         db.session.add(course)
 
-
     db.session.commit()
-
 
     print(
         "Dataset successfully loaded!"
@@ -210,11 +208,9 @@ def recommend_courses(user_input):
 
     courses = Course.query.all()
 
-
     if not courses:
 
         return []
-
 
     # --------------------------------------------------------
     # Get course titles
@@ -228,7 +224,6 @@ def recommend_courses(user_input):
 
     ]
 
-
     # --------------------------------------------------------
     # TF-IDF Vectorizer
     # --------------------------------------------------------
@@ -236,7 +231,6 @@ def recommend_courses(user_input):
     vectorizer = TfidfVectorizer(
         stop_words="english"
     )
-
 
     # --------------------------------------------------------
     # Convert course titles into vectors
@@ -246,7 +240,6 @@ def recommend_courses(user_input):
         course_titles
     )
 
-
     # --------------------------------------------------------
     # Convert user input into vector
     # --------------------------------------------------------
@@ -254,7 +247,6 @@ def recommend_courses(user_input):
     user_vector = vectorizer.transform(
         [user_input]
     )
-
 
     # --------------------------------------------------------
     # Calculate cosine similarity
@@ -265,13 +257,11 @@ def recommend_courses(user_input):
         course_vectors
     )[0]
 
-
     # --------------------------------------------------------
     # Create recommendation list
     # --------------------------------------------------------
 
     recommendations = []
-
 
     for index, course in enumerate(courses):
 
@@ -288,7 +278,6 @@ def recommend_courses(user_input):
 
         })
 
-
     # --------------------------------------------------------
     # Sort recommendations
     # --------------------------------------------------------
@@ -300,7 +289,6 @@ def recommend_courses(user_input):
         reverse=True
 
     )
-
 
     # --------------------------------------------------------
     # Return top 5
@@ -315,6 +303,7 @@ def recommend_courses(user_input):
 
 @app.route("/")
 def home():
+
     return "Course Recommendation API is running!"
 
 
@@ -334,7 +323,6 @@ def recommendation_api():
 
     data = request.get_json()
 
-
     # --------------------------------------------------------
     # Check data
     # --------------------------------------------------------
@@ -348,7 +336,6 @@ def recommendation_api():
 
         }), 400
 
-
     # --------------------------------------------------------
     # Get user query
     # --------------------------------------------------------
@@ -357,7 +344,6 @@ def recommendation_api():
         "query",
         ""
     ).strip()
-
 
     # --------------------------------------------------------
     # Check empty query
@@ -372,7 +358,6 @@ def recommendation_api():
 
         }), 400
 
-
     # --------------------------------------------------------
     # Generate recommendations
     # --------------------------------------------------------
@@ -380,7 +365,6 @@ def recommendation_api():
     recommendations = recommend_courses(
         user_input
     )
-
 
     # --------------------------------------------------------
     # Return response
@@ -408,7 +392,6 @@ if __name__ == "__main__":
     print("======================================")
     print()
 
-
     # --------------------------------------------------------
     # Create database
     # --------------------------------------------------------
@@ -418,7 +401,6 @@ if __name__ == "__main__":
         db.create_all()
 
         load_courses()
-
 
     # --------------------------------------------------------
     # Start Flask
