@@ -1,40 +1,53 @@
+```html
 <!DOCTYPE html>
 
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Course Finder | AI Recommendations</title>
+    <title>Course Finder | AI Recommendations</title>
 
-<!-- Tailwind CSS CDN -->
-<script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- Tailwind Configuration -->
-<script>
-    tailwind.config = {
-        theme: {
-            extend: {
-                fontFamily: {
-                    sans: [
-                        "Inter",
-                        "ui-sans-serif",
-                        "system-ui",
-                        "sans-serif"
-                    ]
+    <!-- Tailwind Configuration -->
+    <script>
+
+        tailwind.config = {
+
+            theme: {
+
+                extend: {
+
+                    fontFamily: {
+
+                        sans: [
+                            "Inter",
+                            "ui-sans-serif",
+                            "system-ui",
+                            "sans-serif"
+                        ]
+
+                    }
+
                 }
+
             }
-        }
-    };
-</script>
-```
+
+        };
+
+    </script>
 
 </head>
 
+
 <body class="min-h-screen bg-slate-50 font-sans text-slate-900">
 
-```
+
 <!-- =====================================================
      NAVBAR
 ====================================================== -->
@@ -76,6 +89,7 @@
 
             </div>
 
+
             <!-- Status -->
 
             <div
@@ -103,6 +117,7 @@
 
 <main class="mx-auto max-w-6xl px-6 py-12">
 
+
     <!-- =================================================
          HERO SECTION
     ================================================== -->
@@ -118,6 +133,7 @@
 
         </div>
 
+
         <h2
             class="text-4xl font-bold leading-tight
                    text-slate-900 md:text-5xl">
@@ -129,6 +145,7 @@
             </span>
 
         </h2>
+
 
         <p
             class="mx-auto mt-4 max-w-2xl text-lg
@@ -151,6 +168,7 @@
         class="mx-auto max-w-4xl rounded-2xl
                border border-slate-200 bg-white
                p-6 shadow-sm md:p-8">
+
 
         <!-- Input Label -->
 
@@ -198,6 +216,7 @@
                 Try an example:
             </p>
 
+
             <div class="flex flex-wrap gap-2">
 
                 <button
@@ -212,6 +231,7 @@
 
                 </button>
 
+
                 <button
                     type="button"
                     onclick="setQuery('Machine Learning')"
@@ -224,6 +244,7 @@
 
                 </button>
 
+
                 <button
                     type="button"
                     onclick="setQuery('Data Science')"
@@ -235,6 +256,7 @@
                     Data Science
 
                 </button>
+
 
                 <button
                     type="button"
@@ -338,6 +360,7 @@
 
             </div>
 
+
             <div
                 class="hidden items-center gap-2
                        text-sm text-slate-500 sm:flex">
@@ -391,6 +414,7 @@
 
 <script>
 
+
     // ==================================================
     // ELEMENTS
     // ==================================================
@@ -398,26 +422,34 @@
     const queryInput =
         document.getElementById("query");
 
+
     const loading =
         document.getElementById("loading");
+
 
     const resultsSection =
         document.getElementById("resultsSection");
 
+
     const results =
         document.getElementById("results");
+
 
     const error =
         document.getElementById("error");
 
+
     const button =
         document.getElementById("recommendButton");
+
 
     const buttonText =
         document.getElementById("buttonText");
 
+
     const buttonIcon =
         document.getElementById("buttonIcon");
+
 
     const characterCount =
         document.getElementById("characterCount");
@@ -526,24 +558,34 @@
 
         try {
 
+
             // ==========================================
             // SEND REQUEST TO RENDER FLASK API
             // ==========================================
 
             const response = await fetch(
+
                 "https://courserecommendersystems-api.onrender.com/api/recommend",
+
                 {
+
                     method: "POST",
 
                     headers: {
+
                         "Content-Type":
                             "application/json"
+
                     },
 
                     body: JSON.stringify({
+
                         query: query
+
                     })
+
                 }
+
             );
 
 
@@ -553,11 +595,14 @@
 
             let data;
 
+
             try {
 
                 data = await response.json();
 
-            } catch (jsonError) {
+            }
+
+            catch (jsonError) {
 
                 throw new Error(
                     "Server returned an invalid response."
@@ -569,8 +614,10 @@
             if (!response.ok) {
 
                 throw new Error(
+
                     data.error ||
                     "Unable to get recommendations."
+
                 );
 
             }
@@ -581,8 +628,11 @@
             // ==========================================
 
             if (
+
                 !data.recommendations ||
+
                 data.recommendations.length === 0
+
             ) {
 
                 showError(
@@ -599,6 +649,7 @@
             // ==========================================
 
             data.recommendations.forEach(
+
                 (course, index) => {
 
                     createCourseCard(
@@ -607,6 +658,7 @@
                     );
 
                 }
+
             );
 
 
@@ -624,8 +676,11 @@
             setTimeout(() => {
 
                 resultsSection.scrollIntoView({
+
                     behavior: "smooth",
+
                     block: "start"
+
                 });
 
             }, 100);
@@ -643,8 +698,11 @@
 
 
             showError(
+
                 err.message ||
+
                 "Unable to connect to the recommendation server."
+
             );
 
         }
@@ -678,9 +736,13 @@
 
 
         card.className =
+
             "group rounded-2xl border " +
+
             "border-slate-200 bg-white p-6 " +
+
             "shadow-sm transition duration-200 " +
+
             "hover:-translate-y-1 hover:shadow-lg";
 
 
@@ -688,6 +750,7 @@
 
         let score =
             Number(course.score) || 0;
+
 
         score =
             Math.max(
@@ -703,9 +766,13 @@
         // Course title
 
         const title =
+
             escapeHTML(
+
                 course.course_title ||
+
                 "Untitled Course"
+
             );
 
 
@@ -824,7 +891,9 @@
         const div =
             document.createElement("div");
 
+
         div.textContent = text;
+
 
         return div.innerHTML;
 
@@ -836,12 +905,17 @@
     // ==================================================
 
     queryInput.addEventListener(
+
         "keydown",
+
         function(event) {
 
             if (
+
                 event.key === "Enter" &&
+
                 event.ctrlKey
+
             ) {
 
                 event.preventDefault();
@@ -851,7 +925,9 @@
             }
 
         }
+
     );
+
 
 </script>
 
@@ -859,3 +935,4 @@
 </body>
 
 </html>
+```
