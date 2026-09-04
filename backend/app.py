@@ -315,10 +315,7 @@ def recommend_courses(user_input):
 
 @app.route("/")
 def home():
-
-    return render_template(
-        "index.html"
-    )
+    return "Course Recommendation API is running!"
 
 
 # ============================================================
