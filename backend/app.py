@@ -1,3 +1,4 @@
+```python
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 
@@ -381,7 +382,32 @@ def recommendation_api():
 
 
 # ============================================================
-# 8. MAIN PROGRAM
+# 8. DATABASE INITIALIZATION
+# ============================================================
+#
+# IMPORTANT:
+# This must be OUTSIDE the __main__ block.
+#
+# Render uses:
+#
+#     gunicorn app:app
+#
+# Gunicorn imports this file instead of running
+# the __main__ section.
+#
+# Therefore database creation and CSV loading
+# must happen when the application is imported.
+# ============================================================
+
+with app.app_context():
+
+    db.create_all()
+
+    load_courses()
+
+
+# ============================================================
+# 9. MAIN PROGRAM
 # ============================================================
 
 if __name__ == "__main__":
@@ -392,20 +418,6 @@ if __name__ == "__main__":
     print("======================================")
     print()
 
-    # --------------------------------------------------------
-    # Create database
-    # --------------------------------------------------------
-
-    with app.app_context():
-
-        db.create_all()
-
-        load_courses()
-
-    # --------------------------------------------------------
-    # Start Flask
-    # --------------------------------------------------------
-
     print(
         "Starting Flask server..."
     )
@@ -415,3 +427,4 @@ if __name__ == "__main__":
     app.run(
         debug=True
     )
+```
