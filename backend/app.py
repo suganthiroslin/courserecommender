@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 
@@ -10,6 +9,14 @@ from sklearn.metrics.pairwise import cosine_similarity
 import os
 
 from flask_cors import CORS
+
+# ============================================================
+# NLP IMPORTS
+# ============================================================
+
+import re
+
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
 
 # ============================================================
@@ -198,7 +205,69 @@ def load_courses():
 
 
 # ============================================================
-# 5. RECOMMENDATION FUNCTION
+# 5. NLP PREPROCESSING
+# ============================================================
+
+def preprocess_text(text):
+
+    # --------------------------------------------------------
+    # Convert text to lowercase
+    # --------------------------------------------------------
+
+    text = text.lower()
+
+    # --------------------------------------------------------
+    # Remove special characters and punctuation
+    # Keep only letters and numbers
+    # --------------------------------------------------------
+
+    text = re.sub(
+        r"[^a-z0-9\s]",
+        " ",
+        text
+    )
+
+    # --------------------------------------------------------
+    # Remove extra spaces
+    # --------------------------------------------------------
+
+    text = re.sub(
+        r"\s+",
+        " ",
+        text
+    ).strip()
+
+    # --------------------------------------------------------
+    # Tokenization
+    # --------------------------------------------------------
+
+    words = text.split()
+
+    # --------------------------------------------------------
+    # Remove English stop words
+    # --------------------------------------------------------
+
+    words = [
+
+        word
+
+        for word in words
+
+        if word not in ENGLISH_STOP_WORDS
+
+    ]
+
+    # --------------------------------------------------------
+    # Join cleaned words
+    # --------------------------------------------------------
+
+    cleaned_text = " ".join(words)
+
+    return cleaned_text
+
+
+# ============================================================
+# 6. RECOMMENDATION FUNCTION
 # ============================================================
 
 def recommend_courses(user_input):
@@ -225,38 +294,102 @@ def recommend_courses(user_input):
 
     ]
 
+    # ========================================================
+    # NLP PREPROCESSING
+    # ========================================================
+
+    # --------------------------------------------------------
+    # Clean all course titles
+    # --------------------------------------------------------
+
+    cleaned_course_titles = [
+
+        preprocess_text(title)
+
+        for title in course_titles
+
+    ]
+
+    # --------------------------------------------------------
+    # Clean user input
+    # --------------------------------------------------------
+
+    cleaned_user_input = preprocess_text(
+        user_input
+    )
+
+    # --------------------------------------------------------
+    # Display NLP processing information
+    # This helps during testing/debugging
+    # --------------------------------------------------------
+
+    print()
+    print("Original User Input:")
+    print(user_input)
+
+    print()
+
+    print("After NLP Preprocessing:")
+    print(cleaned_user_input)
+
+    print()
+
+    # --------------------------------------------------------
+    # Check if preprocessing removed everything
+    # --------------------------------------------------------
+
+    if not cleaned_user_input:
+
+        return []
+
+    # ========================================================
+    # TF-IDF
+    # ========================================================
+
     # --------------------------------------------------------
     # TF-IDF Vectorizer
+    #
+    # Stop words are already removed above using NLP.
+    # Therefore stop_words=None is used here.
     # --------------------------------------------------------
 
     vectorizer = TfidfVectorizer(
-        stop_words="english"
+        stop_words=None
     )
 
     # --------------------------------------------------------
-    # Convert course titles into vectors
+    # Convert course titles into TF-IDF vectors
     # --------------------------------------------------------
 
     course_vectors = vectorizer.fit_transform(
-        course_titles
+        cleaned_course_titles
     )
 
     # --------------------------------------------------------
-    # Convert user input into vector
+    # Convert cleaned user input into TF-IDF vector
     # --------------------------------------------------------
 
     user_vector = vectorizer.transform(
-        [user_input]
+        [cleaned_user_input]
     )
 
+    # ========================================================
+    # COSINE SIMILARITY
+    # ========================================================
+
     # --------------------------------------------------------
-    # Calculate cosine similarity
+    # Calculate similarity between user query
+    # and every course
     # --------------------------------------------------------
 
     similarity_scores = cosine_similarity(
         user_vector,
         course_vectors
     )[0]
+
+    # ========================================================
+    # PREDICTION / RANKING
+    # ========================================================
 
     # --------------------------------------------------------
     # Create recommendation list
@@ -281,6 +414,7 @@ def recommend_courses(user_input):
 
     # --------------------------------------------------------
     # Sort recommendations
+    # Highest similarity first
     # --------------------------------------------------------
 
     recommendations.sort(
@@ -292,14 +426,14 @@ def recommend_courses(user_input):
     )
 
     # --------------------------------------------------------
-    # Return top 5
+    # Return top 5 predictions
     # --------------------------------------------------------
 
     return recommendations[:5]
 
 
 # ============================================================
-# 6. HOME PAGE
+# 7. HOME PAGE
 # ============================================================
 
 @app.route("/")
@@ -309,7 +443,7 @@ def home():
 
 
 # ============================================================
-# 7. RECOMMENDATION API
+# 8. RECOMMENDATION API
 # ============================================================
 
 @app.route(
@@ -368,6 +502,19 @@ def recommendation_api():
     )
 
     # --------------------------------------------------------
+    # Check whether recommendations exist
+    # --------------------------------------------------------
+
+    if not recommendations:
+
+        return jsonify({
+
+            "error":
+            "No matching courses found."
+
+        }), 404
+
+    # --------------------------------------------------------
     # Return response
     # --------------------------------------------------------
 
@@ -382,9 +529,9 @@ def recommendation_api():
 
 
 # ============================================================
-# 8. DATABASE INITIALIZATION
+# 9. DATABASE INITIALIZATION
 # ============================================================
-#
+
 # IMPORTANT:
 # This must be OUTSIDE the __main__ block.
 #
@@ -407,7 +554,7 @@ with app.app_context():
 
 
 # ============================================================
-# 9. MAIN PROGRAM
+# 10. MAIN PROGRAM
 # ============================================================
 
 if __name__ == "__main__":
@@ -427,4 +574,3 @@ if __name__ == "__main__":
     app.run(
         debug=True
     )
-
