@@ -71,6 +71,7 @@ def load_courses():
         os.path.abspath(__file__)
     )
 
+
     # --------------------------------------------------------
     # Dataset path
     # --------------------------------------------------------
@@ -79,6 +80,7 @@ def load_courses():
         base_folder,
         "coursea_data.csv"
     )
+
 
     # --------------------------------------------------------
     # Check whether dataset exists
@@ -102,6 +104,7 @@ def load_courses():
 
         return
 
+
     # --------------------------------------------------------
     # Check whether database already has courses
     # --------------------------------------------------------
@@ -114,6 +117,7 @@ def load_courses():
 
         return
 
+
     # --------------------------------------------------------
     # Read CSV
     # --------------------------------------------------------
@@ -125,6 +129,7 @@ def load_courses():
     data = pd.read_csv(
         csv_path
     )
+
 
     # --------------------------------------------------------
     # Display columns
@@ -139,6 +144,7 @@ def load_courses():
     )
 
     print()
+
 
     # --------------------------------------------------------
     # Check course_title column
@@ -162,6 +168,7 @@ def load_courses():
 
         return
 
+
     # --------------------------------------------------------
     # Remove empty course titles
     # --------------------------------------------------------
@@ -170,6 +177,7 @@ def load_courses():
         subset=["course_title"]
     )
 
+
     # --------------------------------------------------------
     # Remove duplicate courses
     # --------------------------------------------------------
@@ -177,6 +185,7 @@ def load_courses():
     data = data.drop_duplicates(
         subset=["course_title"]
     )
+
 
     # --------------------------------------------------------
     # Insert courses into SQLite
@@ -190,7 +199,9 @@ def load_courses():
 
         db.session.add(course)
 
+
     db.session.commit()
+
 
     print(
         "Dataset successfully loaded!"
@@ -216,16 +227,31 @@ def preprocess_text(text):
 
     text = text.lower()
 
+
     # --------------------------------------------------------
-    # Remove special characters and punctuation
-    # Keep only letters and numbers
+    # Remove punctuation and special characters
+    #
+    # IMPORTANT:
+    # \w keeps Unicode letters and numbers.
+    #
+    # Therefore languages such as:
+    # English
+    # Russian
+    # French
+    # Spanish
+    # German
+    # etc.
+    #
+    # are preserved.
     # --------------------------------------------------------
 
     text = re.sub(
-        r"[^a-z0-9\s]",
+        r"[^\w\s]",
         " ",
-        text
+        text,
+        flags=re.UNICODE
     )
+
 
     # --------------------------------------------------------
     # Remove extra spaces
@@ -237,11 +263,13 @@ def preprocess_text(text):
         text
     ).strip()
 
+
     # --------------------------------------------------------
     # Tokenization
     # --------------------------------------------------------
 
     words = text.split()
+
 
     # --------------------------------------------------------
     # Remove English stop words
@@ -256,6 +284,7 @@ def preprocess_text(text):
         if word not in ENGLISH_STOP_WORDS
 
     ]
+
 
     # --------------------------------------------------------
     # Join cleaned words
@@ -278,9 +307,11 @@ def recommend_courses(user_input):
 
     courses = Course.query.all()
 
+
     if not courses:
 
         return []
+
 
     # --------------------------------------------------------
     # Get course titles
@@ -293,6 +324,7 @@ def recommend_courses(user_input):
         for course in courses
 
     ]
+
 
     # ========================================================
     # NLP PREPROCESSING
@@ -310,6 +342,7 @@ def recommend_courses(user_input):
 
     ]
 
+
     # --------------------------------------------------------
     # Clean user input
     # --------------------------------------------------------
@@ -317,6 +350,7 @@ def recommend_courses(user_input):
     cleaned_user_input = preprocess_text(
         user_input
     )
+
 
     # --------------------------------------------------------
     # Display NLP processing information
@@ -334,6 +368,7 @@ def recommend_courses(user_input):
 
     print()
 
+
     # --------------------------------------------------------
     # Check if preprocessing removed everything
     # --------------------------------------------------------
@@ -342,20 +377,22 @@ def recommend_courses(user_input):
 
         return []
 
+
     # ========================================================
-    # TF-IDF
+    #  TF-IDF
     # ========================================================
 
     # --------------------------------------------------------
     # TF-IDF Vectorizer
     #
-    # Stop words are already removed above using NLP.
+    # Stop words are already removed above.
     # Therefore stop_words=None is used here.
     # --------------------------------------------------------
 
     vectorizer = TfidfVectorizer(
         stop_words=None
     )
+
 
     # --------------------------------------------------------
     # Convert course titles into TF-IDF vectors
@@ -365,6 +402,7 @@ def recommend_courses(user_input):
         cleaned_course_titles
     )
 
+
     # --------------------------------------------------------
     # Convert cleaned user input into TF-IDF vector
     # --------------------------------------------------------
@@ -372,6 +410,7 @@ def recommend_courses(user_input):
     user_vector = vectorizer.transform(
         [cleaned_user_input]
     )
+
 
     # ========================================================
     # COSINE SIMILARITY
@@ -387,6 +426,7 @@ def recommend_courses(user_input):
         course_vectors
     )[0]
 
+
     # ========================================================
     # PREDICTION / RANKING
     # ========================================================
@@ -396,6 +436,7 @@ def recommend_courses(user_input):
     # --------------------------------------------------------
 
     recommendations = []
+
 
     for index, course in enumerate(courses):
 
@@ -412,6 +453,7 @@ def recommend_courses(user_input):
 
         })
 
+
     # --------------------------------------------------------
     # Sort recommendations
     # Highest similarity first
@@ -424,6 +466,7 @@ def recommend_courses(user_input):
         reverse=True
 
     )
+
 
     # --------------------------------------------------------
     # Return top 5 predictions
@@ -458,6 +501,7 @@ def recommendation_api():
 
     data = request.get_json()
 
+
     # --------------------------------------------------------
     # Check data
     # --------------------------------------------------------
@@ -471,6 +515,7 @@ def recommendation_api():
 
         }), 400
 
+
     # --------------------------------------------------------
     # Get user query
     # --------------------------------------------------------
@@ -479,6 +524,7 @@ def recommendation_api():
         "query",
         ""
     ).strip()
+
 
     # --------------------------------------------------------
     # Check empty query
@@ -493,6 +539,7 @@ def recommendation_api():
 
         }), 400
 
+
     # --------------------------------------------------------
     # Generate recommendations
     # --------------------------------------------------------
@@ -500,6 +547,7 @@ def recommendation_api():
     recommendations = recommend_courses(
         user_input
     )
+
 
     # --------------------------------------------------------
     # Check whether recommendations exist
@@ -513,6 +561,7 @@ def recommendation_api():
             "No matching courses found."
 
         }), 404
+
 
     # --------------------------------------------------------
     # Return response
@@ -560,9 +609,11 @@ with app.app_context():
 if __name__ == "__main__":
 
     print()
+
     print("======================================")
     print("   COURSE RECOMMENDATION SYSTEM")
     print("======================================")
+
     print()
 
     print(
